@@ -1,2 +1,3 @@
 ./todo-api/todo-api
-./scheduler-api/node_modules
+./scheduler-api/node_modules/
+./scheduler-api/dist/
