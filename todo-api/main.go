@@ -16,7 +16,12 @@ func main() {
 	e.Use(middleware.Logger())
 	todoRepository := NewTodoRepositoryMemoryImpl()
 	e.POST("/todo", func(c echo.Context) error {
-		createTodo := NewCreateTodo(todoRepository)
+		// amqp://fitz:fitz@localhost:5672
+		producer, err := NewProducer("amqp://fitz:fitz@rabbitmq:5672")
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, ApiResponseErrorDto{ErrorMessage: err.Error()})
+		}
+		createTodo := NewCreateTodo(todoRepository, producer)
 		createTodoDto := &CreateTodoDto{}
 		if err := c.Bind(createTodoDto); err != nil {
 			return c.JSON(http.StatusBadRequest, ApiResponseErrorDto{ErrorMessage: "Invalid body"})

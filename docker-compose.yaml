@@ -9,6 +9,27 @@ services:
       - 5000:5000
     networks:
       - kong_learning
+  scheduler-api:
+    build:
+      context: "./scheduler-api"
+      dockerfile: Dockerfile
+    image: "danilocristo/scheduler-api:0.0.1"
+    container_name: scheduler-api
+    ports:
+      - 3000:3000
+    networks:
+      - kong_learning
+  rabbitmq:
+    image: rabbitmq
+    container_name: rabbitmq
+    ports: 
+      - 5672:5672
+      - 15672:15672
+    environment:
+      - RABBITMQ_DEFAULT_USER=fitz
+      - RABBITMQ_DEFAULT_PASS=fitz
+    networks:
+      - kong_learning
 
 networks:
   kong_learning:

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/json"
+	"log"
 	"net/http"
 	"time"
 )
@@ -12,12 +14,18 @@ type CreateTodoDto struct {
 	DueDate     time.Time `json:"due_date"`
 }
 
-type CreateTodo struct {
-	repository TodoRepository
+type SchedulerMessageDto struct {
+	Email            string    `json:"email"`
+	NotificationDate time.Time `json:"notifcationDate"`
 }
 
-func NewCreateTodo(repository TodoRepository) *CreateTodo {
-	return &CreateTodo{repository}
+type CreateTodo struct {
+	repository TodoRepository
+	producer   Producer
+}
+
+func NewCreateTodo(repository TodoRepository, producer Producer) *CreateTodo {
+	return &CreateTodo{repository, producer}
 }
 
 func (ct *CreateTodo) Execute(dto *CreateTodoDto) error {
@@ -29,5 +37,18 @@ func (ct *CreateTodo) Execute(dto *CreateTodoDto) error {
 	if err := ct.repository.Save(todo); err != nil {
 		return NewApiError(err.Error(), http.StatusInternalServerError)
 	}
+
+	schedulerMessage := SchedulerMessageDto{Email: todo.Email, NotificationDate: todo.DueDate}
+	go func(producer Producer, schedulerMessage SchedulerMessageDto) {
+		b, err := json.Marshal(schedulerMessage)
+		if err != nil {
+			log.Printf("%v\n", err)
+		}
+
+		if err := producer.SendMessage(b); err != nil {
+			log.Printf("There was an error pushing a message to the queue %v\n", err)
+		}
+	}(ct.producer, schedulerMessage)
+
 	return nil
 }
