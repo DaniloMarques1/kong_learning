@@ -1,0 +1,16 @@
+services:
+  todo-api:
+    build:
+      context: "./todo-api"
+      dockerfile: Dockerfile
+    image: "danilocristo/todo-api:0.0.1"
+    container_name: todo-api
+    ports:
+      - 5000:5000
+    networks:
+      - kong_learning
+
+networks:
+  kong_learning:
+    name: "kong_learning"
+    driver: bridge
