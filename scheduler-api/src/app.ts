@@ -1,6 +1,7 @@
 import express from 'express';
 
 import SchedulerController from './SchedulerController';
+import SchedulerRepositoryMemoryImpl from './SchedulerRepositoryMemoryImpl';
 import Consumer from './consumer';
 
 export default class App {
@@ -10,11 +11,12 @@ export default class App {
 
   constructor(port: number) {
     this.port = port;
-    this.schedulerController = new SchedulerController();
-    this.consumer = new Consumer();
+    const schedulerRepository = new SchedulerRepositoryMemoryImpl();
+    this.schedulerController = new SchedulerController(schedulerRepository);
+    this.consumer = new Consumer(schedulerRepository);
   }
 
-  async  start() {
+  async start() {
     const app = express();
     app.use(express.json());
 
