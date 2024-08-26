@@ -2,9 +2,16 @@ package main
 
 import (
 	"context"
+	"errors"
+	"os"
 	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
+)
+
+const (
+	KAFKA_PRODUCER = "KAFKA"
+	QUEUE_PRODUCER = "QUEUE" // rabbit mq
 )
 
 type Producer interface {
@@ -12,12 +19,28 @@ type Producer interface {
 	Close() error
 }
 
-type ProducerImpl struct {
+type ProducerQueueImpl struct {
 	conn *amqp.Connection
 	ch   *amqp.Channel
 }
 
-func NewProducer(url string) (*ProducerImpl, error) {
+func NewProducer(producerType string) (Producer, error) {
+	var producer Producer
+	var err error
+	switch producerType {
+	case QUEUE_PRODUCER:
+		producer, err = newProducerQueueImpl()
+	case KAFKA_PRODUCER:
+	// TODO
+	default:
+		return nil, errors.New("Not implemented")
+	}
+
+	return producer, err
+}
+
+func newProducerQueueImpl() (Producer, error) {
+	url := os.Getenv("QUEUE_URL")
 	conn, err := amqp.Dial(url)
 	if err != nil {
 		return nil, err
@@ -27,10 +50,10 @@ func NewProducer(url string) (*ProducerImpl, error) {
 		return nil, err
 	}
 
-	return &ProducerImpl{conn, ch}, nil
+	return &ProducerQueueImpl{conn, ch}, nil
 }
 
-func (p *ProducerImpl) SendMessage(msg []byte) error {
+func (p *ProducerQueueImpl) SendMessage(msg []byte) error {
 	queue, err := p.ch.QueueDeclare("scheduler-queue", true, false, false, false, nil)
 	if err != nil {
 		return err
@@ -52,6 +75,9 @@ func (p *ProducerImpl) SendMessage(msg []byte) error {
 	return nil
 }
 
-func (p *ProducerImpl) Close() error {
+func (p *ProducerQueueImpl) Close() error {
 	return p.conn.Close()
+}
+
+type ProducerKafkaImpl struct {
 }

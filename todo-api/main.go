@@ -1,8 +1,8 @@
 package main
 
 import (
+	"log"
 	"net/http"
-	"os"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -16,12 +16,12 @@ func main() {
 	e := echo.New()
 	e.Use(middleware.Logger())
 	todoRepository := NewTodoRepositoryMemoryImpl()
+	producer, err := NewProducer(QUEUE_PRODUCER)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer producer.Close()
 	e.POST("/todo", func(c echo.Context) error {
-		qurl := os.Getenv("QUEUE_URL")
-		producer, err := NewProducer(qurl)
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, ApiResponseErrorDto{ErrorMessage: err.Error()})
-		}
 		createTodo := NewCreateTodo(todoRepository, producer)
 		createTodoDto := &CreateTodoDto{}
 		if err := c.Bind(createTodoDto); err != nil {
