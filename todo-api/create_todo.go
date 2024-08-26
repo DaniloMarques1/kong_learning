@@ -39,16 +39,17 @@ func (ct *CreateTodo) Execute(dto *CreateTodoDto) error {
 	}
 
 	schedulerMessage := SchedulerMessageDto{Email: todo.Email, NotificationDate: todo.DueDate}
-	go func(producer Producer, schedulerMessage SchedulerMessageDto) {
-		b, err := json.Marshal(schedulerMessage)
-		if err != nil {
-			log.Printf("%v\n", err)
-		}
-
-		if err := producer.SendMessage(b); err != nil {
-			log.Printf("There was an error pushing a message to the queue %v\n", err)
-		}
-	}(ct.producer, schedulerMessage)
-
+	go ct.sendMessageToQueue(schedulerMessage)
 	return nil
+}
+
+func (ct *CreateTodo) sendMessageToQueue(schedulerMessage SchedulerMessageDto) {
+	b, err := json.Marshal(schedulerMessage)
+	if err != nil {
+		log.Printf("%v\n", err)
+	}
+
+	if err := ct.producer.SendMessage(b); err != nil {
+		log.Printf("There was an error pushing a message to the queue %v\n", err)
+	}
 }

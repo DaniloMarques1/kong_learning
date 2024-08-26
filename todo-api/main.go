@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -16,8 +17,8 @@ func main() {
 	e.Use(middleware.Logger())
 	todoRepository := NewTodoRepositoryMemoryImpl()
 	e.POST("/todo", func(c echo.Context) error {
-		// amqp://fitz:fitz@localhost:5672
-		producer, err := NewProducer("amqp://fitz:fitz@rabbitmq:5672")
+		qurl := os.Getenv("QUEUE_URL")
+		producer, err := NewProducer(qurl)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, ApiResponseErrorDto{ErrorMessage: err.Error()})
 		}

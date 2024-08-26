@@ -9,6 +9,9 @@ services:
       - 5000:5000
     networks:
       - kong_learning
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
   scheduler-api:
     build:
       context: "./scheduler-api"
@@ -19,6 +22,9 @@ services:
       - 3000:3000
     networks:
       - kong_learning
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
   rabbitmq:
     image: rabbitmq
     container_name: rabbitmq
@@ -30,6 +36,8 @@ services:
       - RABBITMQ_DEFAULT_PASS=fitz
     networks:
       - kong_learning
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
 
 networks:
   kong_learning:
