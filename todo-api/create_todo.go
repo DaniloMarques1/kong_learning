@@ -47,9 +47,11 @@ func (ct *CreateTodo) sendMessageToQueue(schedulerMessage SchedulerMessageDto) {
 	b, err := json.Marshal(schedulerMessage)
 	if err != nil {
 		log.Printf("%v\n", err)
+		return
 	}
 
 	if err := ct.producer.SendMessage(b); err != nil {
 		log.Printf("There was an error pushing a message to the queue %v\n", err)
+		return
 	}
 }
