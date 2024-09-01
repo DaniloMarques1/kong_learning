@@ -16,13 +16,18 @@ func main() {
 	e := echo.New()
 	e.Use(middleware.Logger())
 	todoRepository := NewTodoRepositoryMemoryImpl()
-	producer, err := NewProducer(QUEUE_PRODUCER)
+	queueProducer, err := NewProducer(QUEUE_PRODUCER)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer producer.Close()
+	defer queueProducer.Close()
+	kafkaProducer, err := NewProducer(KAFKA_PRODUCER)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer kafkaProducer.Close()
 	e.POST("/todo", func(c echo.Context) error {
-		createTodo := NewCreateTodo(todoRepository, producer)
+		createTodo := NewCreateTodo(todoRepository, queueProducer)
 		createTodoDto := &CreateTodoDto{}
 		if err := c.Bind(createTodoDto); err != nil {
 			return c.JSON(http.StatusBadRequest, ApiResponseErrorDto{ErrorMessage: "Invalid body"})
@@ -57,7 +62,7 @@ func main() {
 
 	e.PUT("/todo/:todo_id", func(c echo.Context) error {
 		todoId := c.Param("todo_id")
-		finishTodo := NewFinishTodo(todoRepository)
+		finishTodo := NewFinishTodo(todoRepository, kafkaProducer)
 		if err := finishTodo.Execute(todoId); err != nil {
 			return c.JSON(http.StatusInternalServerError, err.Error())
 		}

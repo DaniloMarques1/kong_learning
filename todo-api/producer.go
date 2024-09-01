@@ -6,7 +6,9 @@ import (
 	"os"
 	"time"
 
+	"github.com/google/uuid"
 	amqp "github.com/rabbitmq/amqp091-go"
+	kafka "github.com/segmentio/kafka-go"
 )
 
 const (
@@ -31,7 +33,7 @@ func NewProducer(producerType string) (Producer, error) {
 	case QUEUE_PRODUCER:
 		producer, err = newProducerQueueImpl()
 	case KAFKA_PRODUCER:
-	// TODO
+		producer, err = newProducerKafkaImpl()
 	default:
 		return nil, errors.New("Not implemented")
 	}
@@ -40,7 +42,8 @@ func NewProducer(producerType string) (Producer, error) {
 }
 
 func newProducerQueueImpl() (Producer, error) {
-	url := os.Getenv("QUEUE_URL")
+	p := &ProducerQueueImpl{}
+	url := p.getQueueUrl()
 	conn, err := amqp.Dial(url)
 	if err != nil {
 		return nil, err
@@ -49,8 +52,18 @@ func newProducerQueueImpl() (Producer, error) {
 	if err != nil {
 		return nil, err
 	}
+	p.conn = conn
+	p.ch = ch
 
-	return &ProducerQueueImpl{conn, ch}, nil
+	return p, nil
+}
+
+func (p *ProducerQueueImpl) getQueueUrl() string {
+	url := os.Getenv("QUEUE_URL")
+	if len(url) == 0 {
+		return "amqp://fitz:fitz@localhost:5672"
+	}
+	return url
 }
 
 func (p *ProducerQueueImpl) SendMessage(msg []byte) error {
@@ -80,4 +93,33 @@ func (p *ProducerQueueImpl) Close() error {
 }
 
 type ProducerKafkaImpl struct {
+	conn *kafka.Conn
+}
+
+func newProducerKafkaImpl() (*ProducerKafkaImpl, error) {
+	topic := "rank-topic"
+	partition := 0
+	conn, err := kafka.DialLeader(context.Background(), "tcp", "kafka:9092", topic, partition)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ProducerKafkaImpl{conn}, nil
+}
+
+func (kp *ProducerKafkaImpl) SendMessage(msg []byte) error {
+	kafkaMsg := kafka.Message{
+		Key:       []byte(uuid.NewString()),
+		Value:     msg,
+		Partition: 0,
+	}
+
+	if _, err := kp.conn.WriteMessages(kafkaMsg); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (kp *ProducerKafkaImpl) Close() error {
+	return kp.conn.Close()
 }

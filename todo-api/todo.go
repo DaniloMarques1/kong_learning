@@ -62,7 +62,7 @@ func (r *TodoRepositoryMemoryImpl) FindById(id string) (*Todo, error) {
 			return &todo, nil
 		}
 	}
-	return nil, errors.New("Not foudn")
+	return nil, errors.New("Not found")
 }
 
 func (r *TodoRepositoryMemoryImpl) Finish(id string) error {
