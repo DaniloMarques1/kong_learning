@@ -97,14 +97,23 @@ type ProducerKafkaImpl struct {
 }
 
 func newProducerKafkaImpl() (*ProducerKafkaImpl, error) {
+	p := &ProducerKafkaImpl{}
 	topic := "rank-topic"
 	partition := 0
-	conn, err := kafka.DialLeader(context.Background(), "tcp", "kafka:9092", topic, partition)
+	conn, err := kafka.DialLeader(context.Background(), "tcp", p.getConnectionString(), topic, partition)
 	if err != nil {
 		return nil, err
 	}
+	p.conn = conn
+	return p, nil
+}
 
-	return &ProducerKafkaImpl{conn}, nil
+func (kp *ProducerKafkaImpl) getConnectionString() string {
+	host := os.Getenv("KAFKA_CONNECTION_STRING")
+	if len(host) == 0 {
+		return "localhost:9092"
+	}
+	return host
 }
 
 func (kp *ProducerKafkaImpl) SendMessage(msg []byte) error {

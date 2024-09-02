@@ -15,5 +15,6 @@ RUN go build -o todo-api
 EXPOSE 5000
 
 ENV QUEUE_URL="amqp://fitz:fitz@rabbitmq:5672"
+ENV KAFKA_CONNECTION_STRING="kafka:9092"
 
 ENTRYPOINT ["./todo-api"]

@@ -21,11 +21,11 @@ type SchedulerMessageDto struct {
 
 type CreateTodo struct {
 	repository TodoRepository
-	producer   Producer
+	qProducer  Producer
 }
 
-func NewCreateTodo(repository TodoRepository, producer Producer) *CreateTodo {
-	return &CreateTodo{repository, producer}
+func NewCreateTodo(repository TodoRepository, qProducer Producer) *CreateTodo {
+	return &CreateTodo{repository, qProducer}
 }
 
 func (ct *CreateTodo) Execute(dto *CreateTodoDto) error {
@@ -50,7 +50,7 @@ func (ct *CreateTodo) sendMessageToQueue(schedulerMessage SchedulerMessageDto) {
 		return
 	}
 
-	if err := ct.producer.SendMessage(b); err != nil {
+	if err := ct.qProducer.SendMessage(b); err != nil {
 		log.Printf("There was an error pushing a message to the queue %v\n", err)
 		return
 	}

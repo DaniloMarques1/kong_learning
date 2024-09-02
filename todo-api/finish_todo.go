@@ -40,6 +40,8 @@ func (ft *FinishTodo) sendMessageToKafka(kafkaMessageDto KafkaMessageDto) {
 		return
 	}
 
+	log.Printf("Sending message to kafka %v\n", string(b))
+
 	if err := ft.producer.SendMessage(b); err != nil {
 		log.Printf("Error sending message to kafka %v\n", err)
 		return
