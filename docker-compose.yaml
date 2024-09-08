@@ -48,6 +48,16 @@ services:
       - "2181:2181"
     networks:
       - kong_learning
+  rank-api:
+    build:
+      context: "./rank-api"
+      dockerfile: Dockerfile
+    image: "danilocristo/rank-api:0.0.1"
+    container_name: rank-api
+    ports:
+      - 8080:8080
+    networks:
+      - kong_learning
 
   kafka:
     image: confluentinc/cp-kafka:7.3.2

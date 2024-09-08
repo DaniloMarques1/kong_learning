@@ -23,7 +23,7 @@ func NewTodoApi(e *echo.Echo, kProducer producer.Producer, qProducer producer.Pr
 }
 
 func (t *TodoApi) Register() {
-	t.g.POST("/todo", func(c echo.Context) error {
+	t.g.POST("", func(c echo.Context) error {
 		createTodo := service.NewCreateTodo(t.todoRepository, t.qProducer)
 		createTodoDto := &service.CreateTodoDto{}
 		if err := c.Bind(createTodoDto); err != nil {
@@ -36,7 +36,7 @@ func (t *TodoApi) Register() {
 		return c.NoContent(http.StatusNoContent)
 	})
 
-	t.g.GET("/todo", func(c echo.Context) error {
+	t.g.GET("", func(c echo.Context) error {
 		listTodo := service.NewListTodo(t.todoRepository)
 		todos, err := listTodo.Execute()
 		if err != nil {
@@ -45,16 +45,7 @@ func (t *TodoApi) Register() {
 		return c.JSON(http.StatusOK, todos)
 	})
 
-	t.g.GET("/todo", func(c echo.Context) error {
-		listTodo := service.NewListTodo(t.todoRepository)
-		todos, err := listTodo.Execute()
-		if err != nil {
-			return model.ResponseError(c, err)
-		}
-		return c.JSON(http.StatusOK, todos)
-	})
-
-	t.g.PUT("/todo/finish/:todo_id", func(c echo.Context) error {
+	t.g.PUT("/finish/:todo_id", func(c echo.Context) error {
 		todoId := c.Param("todo_id")
 		if _, err := uuid.Parse(todoId); err != nil {
 			return model.ResponseError(c, model.NewApiError("Invalid todo id", http.StatusBadRequest))

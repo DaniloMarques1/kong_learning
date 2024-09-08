@@ -1,8 +1,7 @@
 package example.com.service.impl
 
 import example.com.service.RankService
-import example.com.service.RankDto
-import example.com.consumer.KafkaMessage
+import example.com.model.KafkaMessage
 
 import example.com.repository.RankRepository
 

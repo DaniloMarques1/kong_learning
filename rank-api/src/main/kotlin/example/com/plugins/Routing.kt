@@ -5,9 +5,6 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.http.HttpStatusCode
 
-import com.example.model.Priority
-import com.example.model.Task
-
 import example.com.service.RankService
 
 fun Application.configureRouting(rankService: RankService) {
