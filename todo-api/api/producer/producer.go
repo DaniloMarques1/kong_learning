@@ -1,4 +1,4 @@
-package main
+package producer
 
 import (
 	"context"
@@ -27,18 +27,18 @@ type ProducerQueueImpl struct {
 }
 
 func NewProducer(producerType string) (Producer, error) {
-	var producer Producer
+	var p Producer
 	var err error
 	switch producerType {
 	case QUEUE_PRODUCER:
-		producer, err = newProducerQueueImpl()
+		p, err = newProducerQueueImpl()
 	case KAFKA_PRODUCER:
-		producer, err = newProducerKafkaImpl()
+		p, err = newProducerKafkaImpl()
 	default:
 		return nil, errors.New("Not implemented")
 	}
 
-	return producer, err
+	return p, err
 }
 
 func newProducerQueueImpl() (Producer, error) {

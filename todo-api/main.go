@@ -2,73 +2,30 @@ package main
 
 import (
 	"log"
-	"net/http"
 
+	"github.com/danilomarques1/todo-api/api"
+	"github.com/danilomarques1/todo-api/api/model"
+	"github.com/danilomarques1/todo-api/api/producer"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
 
-type ApiResponseErrorDto struct {
-	ErrorMessage string `json:"error_message"`
-}
-
 func main() {
 	e := echo.New()
 	e.Use(middleware.Logger())
-	todoRepository := NewTodoRepositoryMemoryImpl()
-	queueProducer, err := NewProducer(QUEUE_PRODUCER)
+	todoRepository := model.NewTodoRepositoryMemoryImpl()
+	queueProducer, err := producer.NewProducer(producer.QUEUE_PRODUCER)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer queueProducer.Close()
-	kafkaProducer, err := NewProducer(KAFKA_PRODUCER)
+	kafkaProducer, err := producer.NewProducer(producer.KAFKA_PRODUCER)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer kafkaProducer.Close()
-	e.POST("/todo", func(c echo.Context) error {
-		createTodo := NewCreateTodo(todoRepository, queueProducer)
-		createTodoDto := &CreateTodoDto{}
-		if err := c.Bind(createTodoDto); err != nil {
-			return c.JSON(http.StatusBadRequest, ApiResponseErrorDto{ErrorMessage: "Invalid body"})
-		}
-		if err := createTodo.Execute(createTodoDto); err != nil {
-			apiError := err.(*ApiError)
-			return c.JSON(apiError.Code, ApiResponseErrorDto{ErrorMessage: apiError.Msg})
-		}
 
-		return c.NoContent(http.StatusNoContent)
-	})
-
-	e.GET("/todo", func(c echo.Context) error {
-		listTodo := NewListTodo(todoRepository)
-		todos, err := listTodo.Execute()
-		if err != nil {
-			apiError := err.(*ApiError)
-			return c.JSON(apiError.Code, ApiResponseErrorDto{ErrorMessage: apiError.Msg})
-		}
-		return c.JSON(http.StatusOK, todos)
-	})
-
-	e.GET("/todo", func(c echo.Context) error {
-		listTodo := NewListTodo(todoRepository)
-		todos, err := listTodo.Execute()
-		if err != nil {
-			apiError := err.(*ApiError)
-			return c.JSON(apiError.Code, ApiResponseErrorDto{ErrorMessage: apiError.Msg})
-		}
-		return c.JSON(http.StatusOK, todos)
-	})
-
-	e.PUT("/todo/:todo_id", func(c echo.Context) error {
-		todoId := c.Param("todo_id")
-		finishTodo := NewFinishTodo(todoRepository, kafkaProducer)
-		if err := finishTodo.Execute(todoId); err != nil {
-			return c.JSON(http.StatusInternalServerError, err.Error())
-		}
-
-		return c.NoContent(http.StatusNoContent)
-	})
+	api.NewTodoApi(e, kafkaProducer, queueProducer, todoRepository).Register()
 
 	e.Logger.Fatal(e.Start(":5000"))
 }

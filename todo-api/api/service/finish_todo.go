@@ -1,13 +1,16 @@
-package main
+package service
 
 import (
 	"encoding/json"
 	"log"
+
+	"github.com/danilomarques1/todo-api/api/model"
+	"github.com/danilomarques1/todo-api/api/producer"
 )
 
 type FinishTodo struct {
-	repository TodoRepository
-	producer   Producer
+	repository model.TodoRepository
+	p          producer.Producer
 }
 
 type KafkaMessageDto struct {
@@ -15,7 +18,7 @@ type KafkaMessageDto struct {
 	TodoId string `json:"todo_id"`
 }
 
-func NewFinishTodo(repository TodoRepository, producer Producer) *FinishTodo {
+func NewFinishTodo(repository model.TodoRepository, producer producer.Producer) *FinishTodo {
 	return &FinishTodo{repository, producer}
 }
 
@@ -42,7 +45,7 @@ func (ft *FinishTodo) sendMessageToKafka(kafkaMessageDto KafkaMessageDto) {
 
 	log.Printf("Sending message to kafka %v\n", string(b))
 
-	if err := ft.producer.SendMessage(b); err != nil {
+	if err := ft.p.SendMessage(b); err != nil {
 		log.Printf("Error sending message to kafka %v\n", err)
 		return
 	}

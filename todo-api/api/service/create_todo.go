@@ -1,10 +1,13 @@
-package main
+package service
 
 import (
 	"encoding/json"
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/danilomarques1/todo-api/api/model"
+	"github.com/danilomarques1/todo-api/api/producer"
 )
 
 type CreateTodoDto struct {
@@ -20,22 +23,22 @@ type SchedulerMessageDto struct {
 }
 
 type CreateTodo struct {
-	repository TodoRepository
-	qProducer  Producer
+	repository model.TodoRepository
+	qProducer  producer.Producer
 }
 
-func NewCreateTodo(repository TodoRepository, qProducer Producer) *CreateTodo {
+func NewCreateTodo(repository model.TodoRepository, qProducer producer.Producer) *CreateTodo {
 	return &CreateTodo{repository, qProducer}
 }
 
 func (ct *CreateTodo) Execute(dto *CreateTodoDto) error {
-	todo, err := NewTodo(dto.Title, dto.Descritpion, dto.Email, dto.DueDate)
+	todo, err := model.NewTodo(dto.Title, dto.Descritpion, dto.Email, dto.DueDate)
 	if err != nil {
-		return NewApiError(err.Error(), http.StatusBadRequest)
+		return model.NewApiError(err.Error(), http.StatusBadRequest)
 	}
 
 	if err := ct.repository.Save(todo); err != nil {
-		return NewApiError(err.Error(), http.StatusInternalServerError)
+		return model.NewApiError(err.Error(), http.StatusInternalServerError)
 	}
 
 	schedulerMessage := SchedulerMessageDto{Email: todo.Email, NotificationDate: todo.DueDate}
