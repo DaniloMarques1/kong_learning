@@ -1,0 +1,39 @@
+_format_version: "3.0"
+services:
+  - name: todo-api
+    url: "http://todo-api:5000"
+    routes:
+      - name: add-and-list-todo
+        paths:
+          - /todo
+        methods:
+          - POST
+          - GET
+        strip_path: false
+      - name: finish-todo
+        paths:
+          - /todo/finish/
+        methods:
+          - PUT
+        strip_path: false
+
+  - name: scheduler-api
+    url: "http://scheduler-api:3000"
+    routes:
+      - name: retrieve-schedulers
+        paths:
+          - /scheduler
+        methods:
+          - GET
+        strip_path: false
+
+  - name: rank-api
+    url: "http://rank-api:8080"
+    routes:
+      - name: retrieve-rank
+        paths:
+          - /rank
+        methods:
+          - GET
+        strip_path: false
+
